@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beauty-infinispan-server
+  labels:
+    app: infinispan-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: infinispan-server
+  template:
+    metadata:
+      labels:
+        app: infinispan-server
+        networkpolicy.beauty/to-db-pgsql: allow
+    spec:
+      containers:
+      - name: infinispan-server
+        image: registry-jpe2.r-local.net/beauty-beta-dev-api/beauty-infinispan-server:0.0.14
+        
+        env:
+          - name: USER
+            value: admin
+          - name: PASS
+            value: admin
+          - name: jgroups.dns.query
+            value: infinispan-headless-service
+
+        ports:
+        - name: jgroups
+          containerPort: 7600
+        - name: console  
+          containerPort: 11222
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: beauty-infinispan-server
+spec:
+  selector:
+    app: infinispan-server
+  type: ClusterIP
+
+  ports:
+  - name: tcp-jgroups
+    port: 7800
+    targetPort: 7800
+  - name: http-app
+    port: 11222
+    targetPort: 11222
+   
